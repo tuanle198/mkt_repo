@@ -245,3 +245,7 @@ with fig_col4:
     st.markdown("### All traffics last 7 days")
     fig2 = px.line(data_frame= agg_filtered, x="Date", y = "Users")
     st.write(fig2)
+
+
+## Showing and downloading raw data
+st.dataframe(df)
