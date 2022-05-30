@@ -6,6 +6,7 @@ import datetime
 from datetime import date
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
+import base64
 
 st.set_page_config(
     page_title="Real-Time DISCOS App Listing Dashboard",
@@ -248,4 +249,9 @@ with fig_col4:
 
 
 ## Showing and downloading raw data
-st.dataframe(df)
+st.markdown("### Raw data from GA analytics")
+number = st.number_input(label = 'Number of rows to be shown',
+                         min_value = 5,
+                         max_value = len(df)
+)
+st.dataframe(df.head(number))
