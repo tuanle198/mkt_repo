@@ -107,21 +107,17 @@ body = {'reportRequests': [{'viewId': '266420819',
    'dimensions': [{'name': 'ga:landingPagePath'}, {'name': 'ga:date'}]}]}
    
 ## Generate df and clean
-@st.experimental_memo
-def get_data() -> pd.DataFrame:
-    return run_report(body, KEY_FILE_LOCATION)
+# @st.experimental_memo
+# def get_data() -> pd.DataFrame:
+#     return run_report(body, KEY_FILE_LOCATION)
 
-df = get_data()
+df = run_report(body, KEY_FILE_LOCATION)
 
 # df = run_report(body, KEY_FILE_LOCATION)
 df.columns = ['Landing Page','Date','Users','New Users','Sessions','Bounce Rate','Pages/Session','Avg. Session Duration']
 df['Users'] = df['Users'].astype('int')
 df['New Users'] = df['New Users'].astype('int')
 df['Sessions'] = df['Sessions'].astype('int')
-
-
-
-
 
 
 
