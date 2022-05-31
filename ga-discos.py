@@ -141,7 +141,6 @@ df['keyword'] = df['Landing Page'].apply(lambda x: x.split('surface_detail=')[1]
 df['keyword'] = df['keyword'].apply(lambda x: x.replace('+',' '))
 
 
-
 # Setup dashboard layout
 st.title("Real-Time DISCOS App Listing Dashboard")
 
@@ -254,4 +253,5 @@ number = st.number_input(label = 'Number of rows to be shown',
                          min_value = 5,
                          max_value = len(df)
 )
-st.dataframe(df.head(number))
+raw = df.sort_values('Date', ascending = False)
+st.dataframe(raw.head(number))
