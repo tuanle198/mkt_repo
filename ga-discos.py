@@ -277,7 +277,3 @@ number = st.number_input(label='Number of rows to be shown',
                          )
 raw = df.sort_values('Date', ascending=False)
 st.dataframe(raw.head(number))
-
-s_buf = io.StringIO()
-df.to_csv(s_buf)
-st.download_button(label = 'Download Data', data = s_buf)
