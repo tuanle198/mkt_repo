@@ -7,6 +7,7 @@ from datetime import date
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 import base64
+import io
 
 st.set_page_config(
     page_title="Real-Time DISCOS App Listing Dashboard",
@@ -276,3 +277,7 @@ number = st.number_input(label='Number of rows to be shown',
                          )
 raw = df.sort_values('Date', ascending=False)
 st.dataframe(raw.head(number))
+
+s_buf = io.StringIO()
+df.to_csv(s_buf)
+st.download_button(label = 'Download Data', s_buf)

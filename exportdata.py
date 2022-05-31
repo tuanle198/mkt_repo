@@ -15,7 +15,7 @@ st.set_page_config(
 )
 ##### We will use API to read from google analytics in this step
 SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
-KEY_FILE_LOCATION = 'ga-key.json'
+KEY_FILE_LOCATION = 'ga-key-2.json'
 VIEW_ID = '266420819'
 
 def format_summary(response):
@@ -98,14 +98,19 @@ def run_report(body, credentials_file):
     return(format_report(response).reset_index())
 
 body = {'reportRequests': [{'viewId': '266420819',
-   'dateRanges': [{'startDate': '2022-05-01', 'endDate': 'today'}],
-   'metrics': [{'expression': 'ga:users'},
-    {'expression': 'ga:newUsers'},
-    {'expression': 'ga:sessions'},
-    {'expression': 'ga:bounceRate'},
-    {'expression': 'ga:pageviewsPerSession'},
-    {'expression': 'ga:avgSessionDuration'}],
-   'dimensions': [{'name': 'ga:landingPagePath'}, {'name': 'ga:date'}]}]}
+                            'dateRanges': [{'startDate': '2022-05-01', 'endDate': 'today'}],
+                            'metrics': [{'expression': 'ga:users'},
+                                        {'expression': 'ga:newUsers'},
+                                        {'expression': 'ga:sessions'},
+                                        {'expression': 'ga:bounceRate'},
+                                        {'expression': 'ga:pageviewsPerSession'},
+                                        {'expression': 'ga:avgSessionDuration'},
+                                        {'expression':'ga:totalEvents'}],
+                            'dimensions': [{'name': 'ga:landingPagePath'},
+                                           {'name': 'ga:date'},
+                                           {'name':'ga:source'},
+                                           {'name':'ga:country'},
+                                           {'name':'ga:deviceCategory'}]}]}
    
 ## Generate df and clean
 # @st.experimental_memo
