@@ -154,8 +154,8 @@ df['Sessions'] = df['Sessions'].astype('int')
 # Total Events convert to integer
 df['Total Events'] = df['Total Events'].astype('int')
 # Avg. Session Duration convert to timedelta
-df['Avg. Session Duration'] = pd.to_timedelta(df['Avg. Session Duration'])
-df['Avg. Session Duration'] = df['Avg. Session Duration'].dt.total_seconds()
+# df['Avg. Session Duration'] = pd.to_timedelta(df['Avg. Session Duration'])
+# df['Avg. Session Duration'] = df['Avg. Session Duration'].dt.total_seconds()
 
 # Date converter
 df['Date'] = df['Date'].astype('str')
@@ -235,9 +235,12 @@ desc = ['increase sales',
         'in cart upsell',
         'one click upsell',
         'upsell']
-# Create dataframe for fig_col2 and fig_col3
+# Create dataframe for fig_col2 and fig_col3 and fig_col6
 keyword_group = df[df['keyword'] != 'Others'].groupby('keyword').agg(
-    {'Users': 'sum', 'Pages/Session': 'mean', 'Avg. Session Duration': 'mean'}).reset_index()
+    {'Users': 'sum', 
+    'Pages/Session': 'mean',
+    'Avg. Session Duration': 'mean',
+     'Total Events':'sum'}).reset_index()
 keyword_group['Target Priority'] = 'None'
 keyword_group.loc[keyword_group['keyword'].apply(
     lambda x: x in desc), 'Target Priority'] = 'Include in desc.'
@@ -264,8 +267,6 @@ with fig_col1:
     fig1 = px.line(data_frame=agg_filtered, x="Date", y="Users")
     st.write(fig1)
 with fig_col2:
-    st.markdown(
-        "### Top 10 keywords with high traffic")
     fig2 = px.bar(data_frame=top_keyword_group, x="keyword",
                   y="Users", color='Target Priority')
     st.write(fig2)
@@ -275,16 +276,28 @@ with fig_col3:
     st.markdown(
         "### Average session duration of top 10 highest traffic keywords")
     fig3 = px.bar(data_frame=top_keyword_group, x="keyword",
-                  y="Avg. Session Duration", color='Target Priority')
+                  y="Avg. Session Duration", color='Target Priority',
+                                   labels=
+                                   {
+                     "Avg. Session Duration": "Avg. Session Duration (seconds)"
+                                   }
+                  )
     st.write(fig3)
 with fig_col4:
     st.markdown("### Top 5 countries with highest traffic")
     fig4 = px.pie(data_frame=countries, names="Country", values = 'Users')
     st.write(fig4)
 
-st.markdown("### User distribution by device")
-fig5 = px.pie(data_frame=devices, names="Device", values = 'Users')
-st.write(fig5)
+fig_col5,fig_col6 = st.columns(2)
+with fig_col5:
+    st.markdown("### User distribution by device")
+    fig5 = px.pie(data_frame=devices, names="Device", values = 'Users')
+    st.write(fig5)
+with fig_col6:
+    st.markdown("### Click add app by keyword")
+    fig6 = px.bar(data_frame=top_keyword_group, x="keyword",
+                  y="Total Events", color='Target Priority')
+    st.write(fig6)
 # Showing and downloading raw data
 st.markdown("### Raw data from GA analytics")
 number = st.number_input(label='Number of rows to be shown',
