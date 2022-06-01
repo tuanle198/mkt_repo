@@ -15,7 +15,7 @@ st.set_page_config(
 )
 ##### We will use API to read from google analytics in this step
 SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
-KEY_FILE_LOCATION = 'ga-key-2.json'
+KEY_FILE_LOCATION = 'ga-key.json'
 VIEW_ID = '266420819'
 
 def format_summary(response):

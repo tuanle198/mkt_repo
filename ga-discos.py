@@ -127,6 +127,23 @@ body = {'reportRequests': [{'viewId': '266420819',
 #     return run_report(body, KEY_FILE_LOCATION)
 
 df = run_report(body, KEY_FILE_LOCATION)
+# Setup dashboard layout
+st.title("Real-Time DISCOS App Listing Dashboard")
+# Date filter
+st.markdown("## Choose start date and end date")
+
+date_col_start, date_col_end = st.columns(2)
+with date_col_start: 
+ sd = st.date_input(
+    "Start date",
+    datetime.date(2022, 5, 5),
+    min_value = datetime.date(2022, 5, 5))
+with date_col_end:
+    ed = st.date_input(
+    "End date",
+    date.today(),
+    min_value = sd)
+
 
 # df = run_report(body, KEY_FILE_LOCATION)
 df.columns = ['Landing Page', 'Date', 'Source','Country','Device', 'Users', 'New Users',
@@ -154,12 +171,9 @@ df['keyword'] = df['Landing Page'].apply(lambda x: x.split('surface_detail=')[1]
     '&')[0] if 'surface_detail' and 'surface_type=search' in x else 'Others')
 df['keyword'] = df['keyword'].apply(lambda x: x.replace('+', ' '))
 
-
-# Setup dashboard layout
-st.title("Real-Time DISCOS App Listing Dashboard")
-
-job_filter = st.selectbox("Select users source", pd.unique(df["type"]))
-temp_df = df[df["type"] == job_filter]
+# Filter by date df
+mask = (df['Date'] >= pd.Timestamp(sd)) & (df['Date'] <= pd.Timestamp(ed))
+df = df[mask]
 
 # create three columns to store all source
 all_kpi1, all_kpi2, all_kpi3 = st.columns(3)
@@ -186,28 +200,28 @@ all_kpi3.metric(
 )
 
 # create three columns to store filtered source
-kpi1, kpi2, kpi3 = st.columns(3)
+# kpi1, kpi2, kpi3 = st.columns(3)
 
 # fill in those three columns with respective metrics or KPIs
-mask = temp_df['Date'] < temp_df['Date'].max()
+# mask = temp_df['Date'] < temp_df['Date'].max()
 
-kpi1.metric(
-    label="Users by source",
-    value=sum(temp_df['Users']),
-    delta=sum(temp_df['Users']) - sum(temp_df[mask]['Users'])
-)
+# kpi1.metric(
+#     label="Users by source",
+#     value=sum(temp_df['Users']),
+#     delta=sum(temp_df['Users']) - sum(temp_df[mask]['Users'])
+# )
 
-kpi2.metric(
-    label="New users by source",
-    value=sum(temp_df['New Users']),
-    delta=sum(temp_df['New Users']) - sum(temp_df[mask]['New Users'])
-)
+# kpi2.metric(
+#     label="New users by source",
+#     value=sum(temp_df['New Users']),
+#     delta=sum(temp_df['New Users']) - sum(temp_df[mask]['New Users'])
+# )
 
-kpi3.metric(
-    label="Sessions by source",
-    value=sum(temp_df['Sessions']),
-    delta=sum(temp_df['Sessions']) - sum(temp_df[mask]['Sessions'])
-)
+# kpi3.metric(
+#     label="Sessions by source",
+#     value=sum(temp_df['Sessions']),
+#     delta=sum(temp_df['Sessions']) - sum(temp_df[mask]['Sessions'])
+# )
 
 
 # create two columns for charts
@@ -221,7 +235,7 @@ desc = ['increase sales',
         'in cart upsell',
         'one click upsell',
         'upsell']
-# keyword_group = df[df['keyword'] != 'Others'].groupby('keyword')['Users'].sum().to_frame().reset_index()
+# Create dataframe for fig_col2 and fig_col3
 keyword_group = df[df['keyword'] != 'Others'].groupby('keyword').agg(
     {'Users': 'sum', 'Pages/Session': 'mean', 'Avg. Session Duration': 'mean'}).reset_index()
 keyword_group['Target Priority'] = 'None'
@@ -232,42 +246,37 @@ keyword_group.loc[keyword_group['keyword'].apply(
 top_keyword_group = keyword_group.sort_values(
     'Users', ascending=False).head(10)
 
-# Create dataframe for fig_col2
-today = date.today()
-seven_days_ago = today - datetime.timedelta(days=7)
-mask = (df['Date'].dt.date <= today) & (df['Date'].dt.date >= seven_days_ago)
-filtered = df[mask]
-agg_filtered = filtered.groupby('Date')['Users'].sum().to_frame().reset_index()
+# Create dataframe for fig_col1
+agg_filtered = df.groupby('Date')['Users'].sum().to_frame().reset_index()
 agg_filtered['Date'] = agg_filtered['Date'].apply(lambda x: x.date())
+# Create dataframe for fig_col4
+countries = df.groupby('Country')['Users'].sum().reset_index().sort_values('Users', ascending = False).reset_index()
+countries.loc[countries['Users'] < countries['Users'][4],'Country'] = 'Others'
+countries = countries.groupby('Country')['Users'].sum().sort_values(ascending = False).reset_index()
 
 fig_col1, fig_col2 = st.columns(2)
-
 with fig_col1:
-    st.markdown("### Traffic by keywords (all time, top 10 keywords)")
-    fig = px.bar(top_keyword_group, x="Users",
-                 y="keyword", color='Target Priority')
-    st.write(fig)
-
+    st.markdown("### All traffics last 7 days")
+    fig1 = px.line(data_frame=agg_filtered, x="Date", y="Users")
+    st.write(fig1)
 with fig_col2:
-    st.markdown("### Average page per session (all time, top 10 keywords)")
-    fig = px.bar(top_keyword_group, y="Pages/Session",
-                 x="keyword", color='Target Priority')
-    st.write(fig)
+    st.markdown(
+        "### Top 10 keywords with high traffic")
+    fig2 = px.bar(data_frame=top_keyword_group, x="keyword",
+                  y="Users", color='Target Priority')
+    st.write(fig2)
 
-fig_col3, fig_col4 = st.columns(2)
-
+fig_col3,fig_col4 = st.columns(2)
 with fig_col3:
     st.markdown(
-        "### Average session duration in seconds (all time, top 10 keywords)")
-    fig2 = px.bar(data_frame=top_keyword_group, x="keyword",
+        "### Average session duration of top 10 highest traffic keywords")
+    fig3 = px.bar(data_frame=top_keyword_group, x="keyword",
                   y="Avg. Session Duration", color='Target Priority')
-    st.write(fig2)
-
+    st.write(fig3)
 with fig_col4:
-    st.markdown("### All traffics last 7 days")
-    fig2 = px.line(data_frame=agg_filtered, x="Date", y="Users")
-    st.write(fig2)
-
+    st.markdown("### Top 5 countries with highest traffic")
+    fig4 = px.pie(data_frame=countries, names="Country", values = 'Users')
+    st.write(fig4)
 
 # Showing and downloading raw data
 st.markdown("### Raw data from GA analytics")
