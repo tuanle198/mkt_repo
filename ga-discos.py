@@ -267,6 +267,7 @@ with fig_col1:
     fig1 = px.line(data_frame=agg_filtered, x="Date", y="Users")
     st.write(fig1)
 with fig_col2:
+    st.markdown("### Top 10 keywords by traffic")
     fig2 = px.bar(data_frame=top_keyword_group, x="keyword",
                   y="Users", color='Target Priority')
     st.write(fig2)
