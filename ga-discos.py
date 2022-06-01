@@ -249,14 +249,18 @@ top_keyword_group = keyword_group.sort_values(
 # Create dataframe for fig_col1
 agg_filtered = df.groupby('Date')['Users'].sum().to_frame().reset_index()
 agg_filtered['Date'] = agg_filtered['Date'].apply(lambda x: x.date())
+
 # Create dataframe for fig_col4
 countries = df.groupby('Country')['Users'].sum().reset_index().sort_values('Users', ascending = False).reset_index()
 countries.loc[countries['Users'] < countries['Users'][4],'Country'] = 'Others'
 countries = countries.groupby('Country')['Users'].sum().sort_values(ascending = False).reset_index()
 
+# Create dataframe for fig_col5
+devices = df.groupby('Device')['Users'].sum().sort_values(ascending = False).reset_index()
+
 fig_col1, fig_col2 = st.columns(2)
 with fig_col1:
-    st.markdown("### All traffics last 7 days")
+    st.markdown("### Traffic by days")
     fig1 = px.line(data_frame=agg_filtered, x="Date", y="Users")
     st.write(fig1)
 with fig_col2:
@@ -278,6 +282,9 @@ with fig_col4:
     fig4 = px.pie(data_frame=countries, names="Country", values = 'Users')
     st.write(fig4)
 
+st.markdown("### User distribution by device")
+fig5 = px.pie(data_frame=devices, names="Device", values = 'Users')
+st.write(fig5)
 # Showing and downloading raw data
 st.markdown("### Raw data from GA analytics")
 number = st.number_input(label='Number of rows to be shown',
