@@ -7,7 +7,6 @@ from datetime import date
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 import base64
-import io
 
 st.set_page_config(
     page_title="Real-Time DISCOS App Listing Dashboard",
@@ -18,7 +17,6 @@ st.set_page_config(
 SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
 KEY_FILE_LOCATION = 'ga-key.json'
 VIEW_ID = '266420819'
-
 
 def format_summary(response):
     try:
@@ -105,14 +103,16 @@ def run_report(body, credentials_file):
     response = service.reports().batchGet(body=body).execute()
     return(format_report(response).reset_index())
 
+def int_converter(column):
+    df[column] = df[column].astype('int')
 
 body = {'reportRequests': [{'viewId': '266420819',
                             'dateRanges': [{'startDate': '2022-05-01', 'endDate': 'today'}],
-                            'metrics': [{'expression': 'ga:users'},
+                            'metrics': [{'expression': 'ga:pageviews'},
+                                        {'expression': 'ga:users'},
                                         {'expression': 'ga:newUsers'},
                                         {'expression': 'ga:sessions'},
                                         {'expression': 'ga:bounceRate'},
-                                        {'expression': 'ga:pageviewsPerSession'},
                                         {'expression': 'ga:avgSessionDuration'},
                                         {'expression':'ga:totalEvents'}],
                             'dimensions': [{'name': 'ga:landingPagePath'},
@@ -144,15 +144,19 @@ with date_col_end:
     date.today(),
     min_value = sd)
 
+exclude = st.radio(
+     "Exclude Vietnam",
+     ('Yes', 'No'))
+
 
 # df = run_report(body, KEY_FILE_LOCATION)
-df.columns = ['Landing Page', 'Date', 'Source','Country','Device', 'Users', 'New Users',
-              'Sessions', 'Bounce Rate', 'Pages/Session', 'Avg. Session Duration','Total Events']
-df['Users'] = df['Users'].astype('int')
-df['New Users'] = df['New Users'].astype('int')
-df['Sessions'] = df['Sessions'].astype('int')
-# Total Events convert to integer
-df['Total Events'] = df['Total Events'].astype('int')
+# Convert unexpected float columns to int
+df.columns = ['Landing Page', 'Date', 'Source','Country','Device', 'Pageviews' ,'Users', 'New Users',
+              'Sessions', 'Bounce Rate', 'Avg. Session Duration','Total Events']
+int_columns = ['Pageviews' ,'Users', 'New Users','Sessions','Bounce Rate','Total Events']
+for column in int_columns:
+    int_converter(column)
+
 # Avg. Session Duration convert to timedelta
 # df['Avg. Session Duration'] = pd.to_timedelta(df['Avg. Session Duration'])
 # df['Avg. Session Duration'] = df['Avg. Session Duration'].dt.total_seconds()
@@ -172,8 +176,13 @@ df['keyword'] = df['Landing Page'].apply(lambda x: x.split('surface_detail=')[1]
 df['keyword'] = df['keyword'].apply(lambda x: x.replace('+', ' '))
 
 # Filter by date df
-mask = (df['Date'] >= pd.Timestamp(sd)) & (df['Date'] <= pd.Timestamp(ed))
-df = df[mask]
+date_mask = (df['Date'] >= pd.Timestamp(sd)) & (df['Date'] <= pd.Timestamp(ed))
+df = df[date_mask]
+
+# Filter by date df
+country_mask = df['Country'] != 'Vietnam'
+if exclude == 'Yes':
+    df = df[country_mask]
 
 # create three columns to store all source
 all_kpi1, all_kpi2, all_kpi3 = st.columns(3)
@@ -195,8 +204,8 @@ all_kpi2.metric(
 
 all_kpi3.metric(
     label="All sessions",
-    value=sum(df['Sessions']),
-    delta=sum(df['Sessions']) - sum(df[mask]['Sessions'])
+    value=sum(df['Pageviews']),
+    delta=sum(df['Pageviews']) - sum(df[mask]['Pageviews'])
 )
 
 # create three columns to store filtered source
@@ -237,8 +246,7 @@ desc = ['increase sales',
         'upsell']
 # Create dataframe for fig_col2 and fig_col3 and fig_col6
 keyword_group = df[df['keyword'] != 'Others'].groupby('keyword').agg(
-    {'Users': 'sum', 
-    'Pages/Session': 'mean',
+    {'Pageviews': 'sum',
     'Avg. Session Duration': 'mean',
      'Total Events':'sum'}).reset_index()
 keyword_group['Target Priority'] = 'None'
@@ -247,29 +255,29 @@ keyword_group.loc[keyword_group['keyword'].apply(
 keyword_group.loc[keyword_group['keyword'].apply(
     lambda x: x in main), 'Target Priority'] = 'Main'
 top_keyword_group = keyword_group.sort_values(
-    'Users', ascending=False).head(10)
+    'Pageviews', ascending=False).head(10)
 
 # Create dataframe for fig_col1
-agg_filtered = df.groupby('Date')['Users'].sum().to_frame().reset_index()
+agg_filtered = df.groupby('Date')['Pageviews'].sum().to_frame().reset_index()
 agg_filtered['Date'] = agg_filtered['Date'].apply(lambda x: x.date())
 
 # Create dataframe for fig_col4
-countries = df.groupby('Country')['Users'].sum().reset_index().sort_values('Users', ascending = False).reset_index()
-countries.loc[countries['Users'] < countries['Users'][4],'Country'] = 'Others'
-countries = countries.groupby('Country')['Users'].sum().sort_values(ascending = False).reset_index()
+countries = df.groupby('Country')['Pageviews'].sum().reset_index().sort_values('Pageviews', ascending = False).reset_index()
+countries.loc[countries['Pageviews'] < countries['Pageviews'][4],'Country'] = 'Others'
+countries = countries.groupby('Country')['Pageviews'].sum().sort_values(ascending = False).reset_index()
 
 # Create dataframe for fig_col5
-devices = df.groupby('Device')['Users'].sum().sort_values(ascending = False).reset_index()
+devices = df.groupby('Device')['Pageviews'].sum().sort_values(ascending = False).reset_index()
 
 fig_col1, fig_col2 = st.columns(2)
 with fig_col1:
     st.markdown("### Traffic by days")
-    fig1 = px.line(data_frame=agg_filtered, x="Date", y="Users")
+    fig1 = px.line(data_frame=agg_filtered, x="Date", y="Pageviews")
     st.write(fig1)
 with fig_col2:
     st.markdown("### Top 10 keywords by traffic")
     fig2 = px.bar(data_frame=top_keyword_group, x="keyword",
-                  y="Users", color='Target Priority')
+                  y="Pageviews", color='Target Priority')
     st.write(fig2)
 
 fig_col3,fig_col4 = st.columns(2)
@@ -286,13 +294,13 @@ with fig_col3:
     st.write(fig3)
 with fig_col4:
     st.markdown("### Top 5 countries with highest traffic")
-    fig4 = px.pie(data_frame=countries, names="Country", values = 'Users')
+    fig4 = px.pie(data_frame=countries, names="Country", values = 'Pageviews')
     st.write(fig4)
 
 fig_col5,fig_col6 = st.columns(2)
 with fig_col5:
     st.markdown("### User distribution by device")
-    fig5 = px.pie(data_frame=devices, names="Device", values = 'Users')
+    fig5 = px.pie(data_frame=devices, names="Device", values = 'Pageviews')
     st.write(fig5)
 with fig_col6:
     st.markdown("### Click add app by keyword")

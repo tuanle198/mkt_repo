@@ -99,24 +99,50 @@ def run_report(body, credentials_file):
 
 body = {'reportRequests': [{'viewId': '266420819',
                             'dateRanges': [{'startDate': '2022-05-01', 'endDate': 'today'}],
-                            'metrics': [{'expression': 'ga:users'},
-                                        {'expression': 'ga:newUsers'},
-                                        {'expression': 'ga:sessions'},
-                                        {'expression': 'ga:bounceRate'},
-                                        {'expression': 'ga:pageviewsPerSession'},
+                            'metrics': [{'expression': 'ga:pageviews'},
                                         {'expression': 'ga:avgSessionDuration'},
                                         {'expression':'ga:totalEvents'}],
                             'dimensions': [{'name': 'ga:landingPagePath'},
                                            {'name': 'ga:date'},
-                                           {'name':'ga:source'},
                                            {'name':'ga:country'},
-                                           {'name':'ga:deviceCategory'}]}]}
-   
-## Generate df and clean
-# @st.experimental_memo
-# def get_data() -> pd.DataFrame:
-#     return run_report(body, KEY_FILE_LOCATION)
+                                           {'name':'ga:eventAction'}]}]}
 
 df = run_report(body, KEY_FILE_LOCATION)
 
-df.to_csv('ga-data.csv')
+# df = run_report(body, KEY_FILE_LOCATION)
+df.columns = ['landing_page', 'date','country','event_action', 'total_page_view','avg_session_duration','total_click_get_app_button']
+
+df['total_page_view'] = df['total_page_view'].astype('int')
+
+# Total Events convert to integer
+df['total_click_get_app_button'] = df['total_click_get_app_button'].astype('int')
+
+# Date converter
+df['date'] = df['date'].astype('str')
+df['date'] = df['date'].apply(lambda x: x[:4] + '-' + x[4:6] + '-' + x[-2:])
+df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
+
+# Extract type of surface
+df['surface_type'] = df['landing_page'].apply(lambda x: x.split(
+    'surface_type')[1].split('=')[1] if 'surface_type' in x else 'Others')
+
+# Midway filter
+mask = (df['surface_type'] == 'search') & (df['country'] != 'Vietnam')
+df = df[mask].sort_values('date', ascending = False)
+
+# Extract keyword
+df['keyword'] = df['landing_page'].apply(lambda x: x.split('surface_detail=')[1].split(
+    '&')[0] if 'surface_detail' and 'surface_type=search' in x else 'Others')
+df['keyword'] = df['keyword'].apply(lambda x: x.replace('+', ' '))
+
+# Extract surface_inter_position
+df['surface_inter_position'] = df['landing_page'].apply(lambda x: x.split('surface_inter_position=')[1].split('&')[0]).astype('int')
+
+# Extract surface_inter_position
+df['surface_intra_position'] = df['landing_page'].apply(lambda x: x.split('surface_intra_position=')[1].split('&')[0]).astype('int')
+
+
+st.dataframe(df)
+csv = df.to_csv()
+
+st.download_button("Download raw data", data=csv, mime = "text/csv", key='download-csv')
