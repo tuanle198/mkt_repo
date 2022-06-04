@@ -203,7 +203,7 @@ all_kpi2.metric(
 )
 
 all_kpi3.metric(
-    label="All sessions",
+    label="All pageviews",
     value=sum(df['Pageviews']),
     delta=sum(df['Pageviews']) - sum(df[mask]['Pageviews'])
 )
