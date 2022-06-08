@@ -162,9 +162,7 @@ for column in int_columns:
 # df['Avg. Session Duration'] = df['Avg. Session Duration'].dt.total_seconds()
 
 # Date converter
-df['Date'] = df['Date'].astype('str')
-df['Date'] = df['Date'].apply(lambda x: x[:4] + '-' + x[4:6] + '-' + x[-2:])
-df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
+df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
 
 # Extract type of surface
 df['type'] = df['Landing Page'].apply(lambda x: x.split(
@@ -185,7 +183,7 @@ if exclude == 'Yes':
     df = df[country_mask]
 
 # create three columns to store all source
-all_kpi1, all_kpi2, all_kpi3 = st.columns(3)
+all_kpi1, all_kpi2, all_kpi3, all_kpi4 = st.columns(4)
 
 # fill in those three columns with respective metrics or KPIs
 mask = df['Date'] < df['Date'].max()
@@ -206,6 +204,12 @@ all_kpi3.metric(
     label="All pageviews",
     value=sum(df['Pageviews']),
     delta=sum(df['Pageviews']) - sum(df[mask]['Pageviews'])
+)
+
+all_kpi4.metric(
+    label="Add Apps",
+    value=sum(df['Total Events']),
+    delta=sum(df['Total Events']) - sum(df[mask]['Total Events'])
 )
 
 # create three columns to store filtered source
@@ -258,7 +262,7 @@ top_keyword_group = keyword_group.sort_values(
     'Pageviews', ascending=False).head(10)
 
 # Create dataframe for fig_col1
-agg_filtered = df.groupby('Date')['Pageviews'].sum().to_frame().reset_index()
+agg_filtered = df.groupby('Date').agg({'Pageviews':'sum','Total Events':'sum'}).reset_index()
 agg_filtered['Date'] = agg_filtered['Date'].apply(lambda x: x.date())
 
 # Create dataframe for fig_col4
@@ -272,7 +276,8 @@ devices = df.groupby('Device')['Pageviews'].sum().sort_values(ascending = False)
 fig_col1, fig_col2 = st.columns(2)
 with fig_col1:
     st.markdown("### Traffic by days")
-    fig1 = px.line(data_frame=agg_filtered, x="Date", y="Pageviews")
+    fig1 = px.line(data_frame=agg_filtered, x="Date", y="Pageviews", markers=True)
+    # fig1.add_bar(data_frame=agg_filtered, x="Date", y="Total Events")
     st.write(fig1)
 with fig_col2:
     st.markdown("### Top 10 keywords by traffic")
