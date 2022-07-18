@@ -137,29 +137,9 @@ int_columns = ['Pageviews', 'Users', 'New Users',
 for column in int_columns:
     int_converter(column)
 
-    # Convert date column to date dtype
+# Convert date column to date dtype
 df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
 
-df = run_report(body, KEY_FILE_LOCATION)
-
-# df = run_report(body, KEY_FILE_LOCATION)
-df.columns = ['Landing Page','Date','Users','New Users','Sessions','Bounce Rate','Pages/Session','Avg. Session Duration']
-df['Users'] = df['Users'].astype('int')
-df['New Users'] = df['New Users'].astype('int')
-df['Sessions'] = df['Sessions'].astype('int')
-
-
-
-
-
-# Avg. Session Duration convert to timedelta
-df['Avg. Session Duration'] = pd.to_timedelta(df['Avg. Session Duration'])
-df['Avg. Session Duration'] = df['Avg. Session Duration'].dt.total_seconds()
-
-# Date converter
-df['Date'] = df['Date'].astype('str')
-df['Date'] = df['Date'].apply(lambda x: x[:4] + '-' + x[4:6] + '-' + x[-2:])
-df['Date'] = pd.to_datetime(df['Date'], format = '%Y-%m-%d')
 
 # Extract type of surface
 df['type'] = df['Landing Page'].apply(lambda x: x.split(
@@ -169,6 +149,7 @@ df['type'] = df['Landing Page'].apply(lambda x: x.split(
 df['keyword'] = df['Landing Page'].apply(lambda x: x.split('surface_detail=')[1].split(
     '&')[0] if 'surface_detail' and 'surface_type=search' in x else 'Others')
 df['keyword'] = df['keyword'].apply(lambda x: x.replace('+', ' '))
+
 # Setup dashboard layout
 st.title("Real-Time DISCOS App Listing Dashboard")
 
@@ -202,7 +183,7 @@ country_mask = df['Country'] != 'Vietnam'
 if exclude == 'Yes':
     df = df[country_mask]
 
-    # Define main and desc keywords
+# Define main and desc keywords
 main = ['buy x get y', 'bogo', 'flash sale', 'flash sales', 'discount']
 desc = ['cart upsell',
         'promotional campaign',
@@ -210,7 +191,7 @@ desc = ['cart upsell',
         'in cart upsell',
         'upsell']
 
-# Create dataframe for fig_col2 and fig_col3 and fig_col4
+# Create dataframe for fig_col2 and fig_col3
 keyword_group = df[df['keyword'] != 'Others'].groupby('keyword').agg(
     {'Pageviews': 'sum',
      'Avg. Session Duration': 'mean',
