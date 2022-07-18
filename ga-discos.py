@@ -111,6 +111,7 @@ def int_converter(column):
 
 
 body = {'reportRequests': [{'viewId': '266420819',
+<<<<<<< HEAD
                             'pageSize': 10000,
                             'dateRanges': [{'startDate': '2022-05-01', 'endDate': 'today'}],
                             'metrics': [{'expression': 'ga:pageviews'},
@@ -139,6 +140,42 @@ for column in int_columns:
 
     # Convert date column to date dtype
 df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
+=======
+   'dateRanges': [{'startDate': '2022-05-01', 'endDate': 'today'}],
+   'metrics': [{'expression': 'ga:users'},
+    {'expression': 'ga:newUsers'},
+    {'expression': 'ga:sessions'},
+    {'expression': 'ga:bounceRate'},
+    {'expression': 'ga:pageviewsPerSession'},
+    {'expression': 'ga:avgSessionDuration'}],
+   'dimensions': [{'name': 'ga:landingPagePath'}, {'name': 'ga:date'}]}]}
+   
+## Generate df and clean
+# @st.experimental_memo
+# def get_data() -> pd.DataFrame:
+#     return run_report(body, KEY_FILE_LOCATION)
+
+df = run_report(body, KEY_FILE_LOCATION)
+
+# df = run_report(body, KEY_FILE_LOCATION)
+df.columns = ['Landing Page','Date','Users','New Users','Sessions','Bounce Rate','Pages/Session','Avg. Session Duration']
+df['Users'] = df['Users'].astype('int')
+df['New Users'] = df['New Users'].astype('int')
+df['Sessions'] = df['Sessions'].astype('int')
+
+
+
+
+
+# Avg. Session Duration convert to timedelta
+df['Avg. Session Duration'] = pd.to_timedelta(df['Avg. Session Duration'])
+df['Avg. Session Duration'] = df['Avg. Session Duration'].dt.total_seconds()
+
+# Date converter
+df['Date'] = df['Date'].astype('str')
+df['Date'] = df['Date'].apply(lambda x: x[:4] + '-' + x[4:6] + '-' + x[-2:])
+df['Date'] = pd.to_datetime(df['Date'], format = '%Y-%m-%d')
+>>>>>>> 927cece (delete memoized data)
 
 # Extract type of surface
 df['type'] = df['Landing Page'].apply(lambda x: x.split(
