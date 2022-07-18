@@ -111,7 +111,6 @@ def int_converter(column):
 
 
 body = {'reportRequests': [{'viewId': '266420819',
-<<<<<<< HEAD
                             'pageSize': 10000,
                             'dateRanges': [{'startDate': '2022-05-01', 'endDate': 'today'}],
                             'metrics': [{'expression': 'ga:pageviews'},
@@ -140,20 +139,6 @@ for column in int_columns:
 
     # Convert date column to date dtype
 df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
-=======
-   'dateRanges': [{'startDate': '2022-05-01', 'endDate': 'today'}],
-   'metrics': [{'expression': 'ga:users'},
-    {'expression': 'ga:newUsers'},
-    {'expression': 'ga:sessions'},
-    {'expression': 'ga:bounceRate'},
-    {'expression': 'ga:pageviewsPerSession'},
-    {'expression': 'ga:avgSessionDuration'}],
-   'dimensions': [{'name': 'ga:landingPagePath'}, {'name': 'ga:date'}]}]}
-   
-## Generate df and clean
-# @st.experimental_memo
-# def get_data() -> pd.DataFrame:
-#     return run_report(body, KEY_FILE_LOCATION)
 
 df = run_report(body, KEY_FILE_LOCATION)
 
