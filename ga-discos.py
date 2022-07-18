@@ -160,7 +160,6 @@ df['Avg. Session Duration'] = df['Avg. Session Duration'].dt.total_seconds()
 df['Date'] = df['Date'].astype('str')
 df['Date'] = df['Date'].apply(lambda x: x[:4] + '-' + x[4:6] + '-' + x[-2:])
 df['Date'] = pd.to_datetime(df['Date'], format = '%Y-%m-%d')
->>>>>>> 927cece (delete memoized data)
 
 # Extract type of surface
 df['type'] = df['Landing Page'].apply(lambda x: x.split(
